@@ -44,6 +44,26 @@ def test_compile_returns_real_job_status(monkeypatch):
     }
 
 
+def test_regeneration_does_not_overwrite_reviewed_skill(monkeypatch, tmp_path):
+    from src.backend import app as app_module
+
+    reviewed_path = tmp_path / "reviewed.json"
+    reviewed_path.write_text('{"reviewed": true}', encoding="utf-8")
+    monkeypatch.setattr(app_module, "SKILL_PATH", reviewed_path)
+    reviewed = reviewed_path.read_text(encoding="utf-8")
+    monkeypatch.setattr(
+        app_module.pipeline,
+        "run",
+        lambda *_args, **_kwargs: {"bvid": TARGET_BVID, "title": "unreviewed", "steps": []},
+    )
+    monkeypatch.setattr(app_module, "WORK_ROOT", tmp_path)
+    job_id, _ = app_module.new_job()
+    app_module.run_job(job_id)
+
+    assert reviewed_path.read_text(encoding="utf-8") == reviewed
+    assert app_module.jobs[job_id]["status"] == "completed"
+
+
 def test_fixed_skill_has_the_requested_frontend_exercises():
     skill = client.get(f"/v1/skills/{TARGET_BVID}").json()
     expected = ["HTML", "图片", "CSS", "按钮"]

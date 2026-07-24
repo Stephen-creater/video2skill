@@ -27,12 +27,6 @@ def fixed_skill() -> dict:
     return json.loads(SKILL_PATH.read_text(encoding="utf-8"))
 
 
-def save_fixed_skill(skill: dict) -> None:
-    temporary_path = SKILL_PATH.with_suffix(".json.tmp")
-    temporary_path.write_text(json.dumps(skill, ensure_ascii=False, indent=2), encoding="utf-8")
-    temporary_path.replace(SKILL_PATH)
-
-
 def new_job() -> tuple[str, dict]:
     job_id = uuid4().hex
     job = {
@@ -61,8 +55,7 @@ def run_job(job_id: str) -> None:
         update_stage(job_id, stage, state)
 
     try:
-        skill = pipeline.run(TARGET_BVID, JobContext(TARGET_BVID, job_id, WORK_ROOT / job_id), observe)
-        save_fixed_skill(skill)
+        pipeline.run(TARGET_BVID, JobContext(TARGET_BVID, job_id, WORK_ROOT / job_id), observe)
     except PipelineUnavailable as error:
         update_stage(job_id, error.stage, "failed", str(error))
         with jobs_lock:

@@ -14,6 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 
 TARGET_BVID = "BV1ZW42197oE"
 MAX_VIDEO_SECONDS = 1937
+LAST_FRAME_SECOND = MAX_VIDEO_SECONDS - 1
 AIPING_BASE_URL = "https://aiping.cn/api/v1"
 AIPING_MODEL = "Kimi-K2.7-Code"
 MLX_WHISPER_MODEL = "mlx-community/whisper-large-v3-turbo"
@@ -152,9 +153,9 @@ class FFmpegFrameExtractor:
             raise PipelineUnavailable("frames", "frame sampling interval must be positive")
         frames_dir = context.workdir / "frames"
         frames_dir.mkdir(parents=True, exist_ok=True)
-        timestamps = list(range(0, MAX_VIDEO_SECONDS, self.interval_seconds))
-        if not timestamps or timestamps[-1] != MAX_VIDEO_SECONDS:
-            timestamps.append(MAX_VIDEO_SECONDS)
+        timestamps = list(range(0, LAST_FRAME_SECOND, self.interval_seconds))
+        if not timestamps or timestamps[-1] != LAST_FRAME_SECOND:
+            timestamps.append(LAST_FRAME_SECOND)
         frames: list[Path] = []
         for timestamp in timestamps:
             frame = frames_dir / f"frame-{timestamp:04d}.jpg"
@@ -269,13 +270,19 @@ class AIPingSkillCompiler:
         self.project_root = project_root
 
     def compile(self, transcript: Transcript, frames: list[Path], context: JobContext) -> str:
-        content: list[dict[str, Any]] = [{"type": "text", "text": self._compile_prompt(transcript.text)}]
+        content: list[dict[str, Any]] = [{"type": "text", "text": self._compile_prompt(transcript)}]
         for frame in frames:
             try:
                 image = base64.b64encode(frame.read_bytes()).decode("ascii")
             except OSError as error:
                 raise PipelineUnavailable("compile", "could not read a full-video key frame") from error
-            content.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image}"}})
+            timestamp = int(frame.stem.rsplit("-", 1)[-1])
+            content.extend(
+                [
+                    {"type": "text", "text": f"VIDEO FRAME timestamp={timestamp}s"},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image}"}},
+                ]
+            )
         raw_output = self._request(
             [
                 {"role": "system", "content": self._system_prompt()},
@@ -333,11 +340,15 @@ class AIPingSkillCompiler:
         )
 
     @staticmethod
-    def _compile_prompt(transcript: str) -> str:
+    def _compile_prompt(transcript: Transcript) -> str:
+        timestamped = "\n".join(
+            f"[{segment['start']:.2f}-{segment['end']:.2f}] {str(segment.get('text', '')).strip()}"
+            for segment in transcript.segments
+        )
         return (
             "Use the full transcript and the full-video key frames supplied with this message to create four executable "
             "web-learning steps. Cite meaningful audio and visual evidence with real timestamps.\n\n"
-            f"FULL TRANSCRIPT:\n{transcript}"
+            f"FULL TRANSCRIPT:\n{transcript.text}\n\nTIMESTAMPED SEGMENTS:\n{timestamped}"
         )
 
 

@@ -169,9 +169,9 @@ def test_frame_extractor_records_periodic_coverage_from_zero_to_video_end(tmp_pa
     frames = extractor.extract(tmp_path / "video.mp4", JobContext(TARGET_BVID, "job", workdir))
 
     manifest = json.loads((workdir / "frames.json").read_text())
-    assert [frame["timestampSeconds"] for frame in manifest["frames"]] == [0, 900, 1800, 1937]
+    assert [frame["timestampSeconds"] for frame in manifest["frames"]] == [0, 900, 1800, 1936]
     assert len(commands) == len(frames) == 4
-    assert frames[-1].name == "frame-1937.jpg"
+    assert frames[-1].name == "frame-1936.jpg"
 
 
 def test_mlx_transcriber_rejects_segments_without_word_timestamps(tmp_path, monkeypatch):
@@ -214,11 +214,19 @@ def test_ai_compiler_sends_full_transcript_and_all_frames_without_a_real_request
     context = JobContext(TARGET_BVID, "ai", tmp_path / "work")
     context.prepare()
 
-    raw = compiler.compile(Transcript(text="完整 ASR 文本", segments=[]), frames, context)
+    raw = compiler.compile(
+        Transcript(text="完整 ASR 文本", segments=[{"start": 12.5, "end": 15.0, "text": "带时间的讲解"}]),
+        frames,
+        context,
+    )
 
     assert json.loads(raw)["bvid"] == TARGET_BVID
     assert calls[0][0].endswith("/chat/completions")
     assert calls[0][1]["json"]["model"] == "Kimi-K2.7-Code"
     content = calls[0][1]["json"]["messages"][1]["content"]
     assert "完整 ASR 文本" in content[0]["text"]
+    assert "12.5" in content[0]["text"]
+    assert "带时间的讲解" in content[0]["text"]
+    assert content[1]["text"] == "VIDEO FRAME timestamp=0s"
+    assert content[3]["text"] == "VIDEO FRAME timestamp=1937s"
     assert len([part for part in content if part["type"] == "image_url"]) == len(frames)
