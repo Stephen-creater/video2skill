@@ -6,11 +6,12 @@ from uuid import uuid4
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-from .pipeline import Pipeline, PipelineUnavailable
+from .pipeline import JobContext, Pipeline, PipelineUnavailable
 
 TARGET_BVID = "BV1ZW42197oE"
 STAGES = ("download", "transcribe", "frames", "compile", "validate")
 SKILL_PATH = Path(__file__).parents[2] / "skills" / f"{TARGET_BVID}.json"
+WORK_ROOT = Path(__file__).parents[2] / "work"
 
 app = FastAPI(title="Video2Skill")
 pipeline = Pipeline()
@@ -24,6 +25,12 @@ class CompileRequest(BaseModel):
 
 def fixed_skill() -> dict:
     return json.loads(SKILL_PATH.read_text(encoding="utf-8"))
+
+
+def save_fixed_skill(skill: dict) -> None:
+    temporary_path = SKILL_PATH.with_suffix(".json.tmp")
+    temporary_path.write_text(json.dumps(skill, ensure_ascii=False, indent=2), encoding="utf-8")
+    temporary_path.replace(SKILL_PATH)
 
 
 def new_job() -> tuple[str, dict]:
@@ -54,7 +61,8 @@ def run_job(job_id: str) -> None:
         update_stage(job_id, stage, state)
 
     try:
-        pipeline.run(TARGET_BVID, observe)
+        skill = pipeline.run(TARGET_BVID, JobContext(TARGET_BVID, job_id, WORK_ROOT / job_id), observe)
+        save_fixed_skill(skill)
     except PipelineUnavailable as error:
         update_stage(job_id, error.stage, "failed", str(error))
         with jobs_lock:

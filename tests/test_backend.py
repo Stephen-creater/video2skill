@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 
 from src.backend.app import TARGET_BVID, app
-from src.backend.pipeline import Pipeline, PipelineUnavailable
+from src.backend.pipeline import JobContext, Pipeline, PipelineUnavailable
 
 
 client = TestClient(app)
@@ -55,12 +55,16 @@ def test_fixed_skill_has_the_requested_frontend_exercises():
         assert "expect(" in step["tests"][0]["code"]
 
 
-def test_default_pipeline_reports_its_unavailable_dependency():
-    pipeline = Pipeline()
+def test_default_pipeline_reports_a_missing_mlx_dependency_at_transcribe_stage(tmp_path):
+    class LocalVideo:
+        def download(self, bvid, context):
+            return tmp_path / "video.mp4"
+
+    pipeline = Pipeline(downloader=LocalVideo())
     try:
-        pipeline.run(TARGET_BVID)
+        pipeline.run(TARGET_BVID, JobContext(TARGET_BVID, "missing-mlx", tmp_path / "work"))
     except PipelineUnavailable as error:
-        assert error.stage == "download"
-        assert "not configured" in str(error)
+        assert error.stage == "transcribe"
+        assert "mlx-whisper" in str(error)
     else:
-        raise AssertionError("the default pipeline must not claim a completed skill")
+        raise AssertionError("the pipeline must report the missing MLX dependency")
