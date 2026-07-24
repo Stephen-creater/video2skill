@@ -4,6 +4,8 @@ from pathlib import Path
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from .pipeline import JobContext, Pipeline, PipelineUnavailable
@@ -12,8 +14,16 @@ TARGET_BVID = "BV1ZW42197oE"
 STAGES = ("download", "transcribe", "frames", "compile", "validate")
 SKILL_PATH = Path(__file__).parents[2] / "skills" / f"{TARGET_BVID}.json"
 WORK_ROOT = Path(__file__).parents[2] / "work"
+LIVECODES_ROOT = Path(__file__).parents[2] / "vendor" / "livecodes"
 
 app = FastAPI(title="Video2Skill")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origin_regex=r"chrome-extension://.*",
+    allow_methods=["GET", "POST"],
+    allow_headers=["content-type"],
+)
+app.mount("/livecodes", StaticFiles(directory=LIVECODES_ROOT, html=True, check_dir=False), name="livecodes")
 pipeline = Pipeline()
 jobs: dict[str, dict] = {}
 jobs_lock = threading.Lock()

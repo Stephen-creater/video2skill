@@ -15,6 +15,7 @@ def test_fixed_skill_has_four_executable_steps():
     assert len(skill["steps"]) == 4
     for step in skill["steps"]:
         assert set(step["starter"]) == {"html", "css", "js"}
+        assert step["requirement"]
         assert step["tests"]
         assert step["evidence"]["audio"]
         assert step["evidence"]["visual"]
@@ -24,6 +25,15 @@ def test_fixed_skill_has_four_executable_steps():
 def test_unknown_video_is_rejected():
     response = client.post("/v1/compile", json={"bvid": "BV0000000000"})
     assert response.status_code == 422
+
+
+def test_backend_exposes_local_livecodes_and_extension_cors():
+    assert any(getattr(route, "path", None) == "/livecodes" for route in app.routes)
+    response = client.get(
+        f"/v1/skills/{TARGET_BVID}",
+        headers={"Origin": "chrome-extension://test-extension"},
+    )
+    assert response.headers["access-control-allow-origin"] == "chrome-extension://test-extension"
 
 
 def test_compile_returns_real_job_status(monkeypatch):
@@ -75,7 +85,18 @@ def test_fixed_skill_has_the_requested_frontend_exercises():
         assert "expect(" in step["tests"][0]["code"]
 
 
-def test_default_pipeline_reports_a_missing_mlx_dependency_at_transcribe_stage(tmp_path):
+def test_default_pipeline_reports_a_missing_mlx_dependency_at_transcribe_stage(tmp_path, monkeypatch):
+    import builtins
+
+    real_import = builtins.__import__
+
+    def import_without_mlx(name, *args, **kwargs):
+        if name == "mlx_whisper":
+            raise ImportError("simulated missing dependency")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", import_without_mlx)
+
     class LocalVideo:
         def download(self, bvid, context):
             return tmp_path / "video.mp4"

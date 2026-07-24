@@ -232,6 +232,7 @@ class Evidence(StrictModel):
 class SkillStep(StrictModel):
     id: str = Field(min_length=1)
     title: str = Field(min_length=1)
+    requirement: str = Field(min_length=1)
     videoSeconds: int = Field(ge=0, le=MAX_VIDEO_SECONDS)
     starter: Starter
     tests: list[JestTest] = Field(min_length=1)
@@ -333,7 +334,7 @@ class AIPingSkillCompiler:
         return (
             "You produce Video2Skill JSON only. Do not use Markdown fences or prose. "
             "The JSON must contain bvid exactly BV1ZW42197oE, a non-empty title, and exactly four steps. "
-            "Every step needs id, title, integer videoSeconds from 0 through 1937, starter with html/css/js, "
+            "Every step needs id, title, requirement, integer videoSeconds from 0 through 1937, starter with html/css/js, "
             "at least one non-empty Jest test ({framework:'jest', name, code}), hint, failureExplanation, "
             "and evidence.audio(startSeconds,endSeconds,quote) plus evidence.visual(startSeconds,endSeconds,description). "
             "Evidence times must be between 0 and 1937 and end after start."

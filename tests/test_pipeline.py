@@ -29,6 +29,7 @@ def valid_skill() -> dict:
             {
                 "id": f"step-{number}",
                 "title": f"第 {number} 步",
+                "requirement": "完成这一练习。",
                 "videoSeconds": number * 100,
                 "starter": {"html": "<main></main>", "css": ".card {}", "js": ""},
                 "tests": [{"framework": "jest", "name": "works", "code": "expect(true).toBe(true);"}],

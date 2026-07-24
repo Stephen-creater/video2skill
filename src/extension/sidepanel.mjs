@@ -30,7 +30,7 @@ async function selectStep(index) {
   const step = state.skill.steps[index];
   await save({ type: "SELECT", step: index });
   $("#title").textContent = step.title;
-  $("#task").textContent = `完成「${step.title}」。`;
+  $("#task").textContent = step.requirement;
   $("#hint").textContent = step.hint;
   $("#failure").textContent = step.failureExplanation;
   $("#lesson").hidden = false;
