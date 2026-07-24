@@ -193,16 +193,9 @@ class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
 
-class Starter(StrictModel):
-    html: str
-    css: str
-    js: str
-
-
-class JestTest(StrictModel):
-    framework: Literal["jest"]
-    name: str = Field(min_length=1)
-    code: str = Field(min_length=1)
+class AnswerOption(StrictModel):
+    id: str = Field(min_length=1)
+    text: str = Field(min_length=1)
 
 
 class TimestampEvidence(StrictModel):
@@ -232,13 +225,25 @@ class Evidence(StrictModel):
 class SkillStep(StrictModel):
     id: str = Field(min_length=1)
     title: str = Field(min_length=1)
-    requirement: str = Field(min_length=1)
+    type: Literal["single_choice", "true_false"]
+    question: str = Field(min_length=1)
+    options: list[AnswerOption] = Field(min_length=2, max_length=4)
+    correctOptionId: str = Field(min_length=1)
     videoSeconds: int = Field(ge=0, le=MAX_VIDEO_SECONDS)
-    starter: Starter
-    tests: list[JestTest] = Field(min_length=1)
     hint: str = Field(min_length=1)
     failureExplanation: str = Field(min_length=1)
     evidence: Evidence
+
+    @model_validator(mode="after")
+    def has_valid_options(self) -> "SkillStep":
+        option_ids = [option.id for option in self.options]
+        if len(option_ids) != len(set(option_ids)):
+            raise ValueError("option ids must be unique")
+        if self.correctOptionId not in option_ids:
+            raise ValueError("correctOptionId must reference an option")
+        if self.type == "true_false" and len(self.options) != 2:
+            raise ValueError("true_false steps must contain exactly 2 options")
+        return self
 
 
 class GeneratedSkill(StrictModel):
@@ -251,6 +256,8 @@ class GeneratedSkill(StrictModel):
     def has_exactly_four_steps(cls, steps: list[SkillStep]) -> list[SkillStep]:
         if len(steps) != 4:
             raise ValueError("steps must contain exactly 4 items")
+        if {step.type for step in steps} != {"single_choice", "true_false"}:
+            raise ValueError("steps must include single_choice and true_false")
         return steps
 
 
@@ -334,9 +341,10 @@ class AIPingSkillCompiler:
         return (
             "You produce Video2Skill JSON only. Do not use Markdown fences or prose. "
             "The JSON must contain bvid exactly BV1ZW42197oE, a non-empty title, and exactly four steps. "
-            "Every step needs id, title, requirement, integer videoSeconds from 0 through 1937, starter with html/css/js, "
-            "at least one non-empty Jest test ({framework:'jest', name, code}), hint, failureExplanation, "
+            "Every step needs id, title, type ('single_choice' or 'true_false'), question, 2-4 options ({id,text}), "
+            "correctOptionId referencing one option, integer videoSeconds from 0 through 1937, hint, failureExplanation, "
             "and evidence.audio(startSeconds,endSeconds,quote) plus evidence.visual(startSeconds,endSeconds,description). "
+            "A true_false step must have exactly two options. The four steps must include both question types. "
             "Evidence times must be between 0 and 1937 and end after start."
         )
 
@@ -347,8 +355,9 @@ class AIPingSkillCompiler:
             for segment in transcript.segments
         )
         return (
-            "Use the full transcript and the full-video key frames supplied with this message to create four executable "
-            "web-learning steps. Cite meaningful audio and visual evidence with real timestamps.\n\n"
+            "Use the full transcript and the full-video key frames supplied with this message to create four objective "
+            "knowledge-check steps. Each answer must be decidable from the cited video evidence. "
+            "Cite meaningful audio and visual evidence with real timestamps.\n\n"
             f"FULL TRANSCRIPT:\n{transcript.text}\n\nTIMESTAMPED SEGMENTS:\n{timestamped}"
         )
 

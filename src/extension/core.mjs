@@ -49,36 +49,10 @@ export function reduceProgress(progress, action) {
   return next;
 }
 
-function testRows(result) {
-  if (Array.isArray(result)) return result;
-  if (!result || typeof result !== "object") return [];
-  if (Array.isArray(result.results)) return result.results;
-  if (Array.isArray(result.tests)) return result.tests;
-  if (Array.isArray(result.result?.tests)) return result.result.tests;
-  if (Array.isArray(result.result?.results)) return result.result.results;
-  return [];
-}
-
-export function normalizeTestResult(result) {
-  const rows = testRows(result);
-  const failed = rows.filter((row) => ["fail", "failed", "error"].includes(String(row?.status).toLowerCase()));
-  const passed = rows.length > 0 && failed.length === 0 && rows.every((row) => String(row?.status).toLowerCase() === "pass");
-  const errorType = failed.some((row) => /syntax|parse/i.test(JSON.stringify(row))) ? "syntax" : "test";
-  return { passed, errorType, results: rows };
-}
-
-export function skillConfig(step) {
+export function gradeAnswer(step, selectedOptionId) {
   return {
-    markup: { language: "html", content: step.starter.html },
-    style: { language: "css", content: step.starter.css },
-    script: { language: "javascript", content: step.starter.js },
-    tests: {
-      language: "javascript",
-      content: step.tests
-        .map((test) => `test(${JSON.stringify(test.name)}, () => {\n${test.code}\n});`)
-        .join("\n"),
-    },
-    activeEditor: "markup",
+    passed: Boolean(selectedOptionId) && selectedOptionId === step.correctOptionId,
+    errorType: "answer",
   };
 }
 

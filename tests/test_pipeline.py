@@ -29,12 +29,16 @@ def valid_skill() -> dict:
             {
                 "id": f"step-{number}",
                 "title": f"第 {number} 步",
-                "requirement": "完成这一练习。",
+                "type": "single_choice" if number % 2 else "true_false",
+                "question": "请选择正确答案。",
+                "options": [
+                    {"id": "yes", "text": "正确"},
+                    {"id": "no", "text": "错误"},
+                ],
+                "correctOptionId": "yes",
                 "videoSeconds": number * 100,
-                "starter": {"html": "<main></main>", "css": ".card {}", "js": ""},
-                "tests": [{"framework": "jest", "name": "works", "code": "expect(true).toBe(true);"}],
-                "hint": "继续完成代码。",
-                "failureExplanation": "缺少关键实现。",
+                "hint": "回看视频。",
+                "failureExplanation": "答案与视频讲解不符。",
                 "evidence": {
                     "audio": {"startSeconds": number * 100 - 1, "endSeconds": number * 100 + 1, "quote": "讲解步骤。"},
                     "visual": {"startSeconds": number * 100 - 1, "endSeconds": number * 100 + 1, "description": "代码编辑器。"},
@@ -140,7 +144,7 @@ def test_second_invalid_response_fails_validation_after_one_repair(tmp_path):
     assert error.value.stage == "validate"
 
 
-def test_strict_schema_requires_four_steps_jest_and_valid_evidence_times():
+def test_strict_schema_requires_four_steps_valid_answers_and_evidence_times():
     validator = PydanticSkillValidator()
     malformed = valid_skill()
     malformed["steps"] = malformed["steps"][:3]
@@ -148,8 +152,13 @@ def test_strict_schema_requires_four_steps_jest_and_valid_evidence_times():
         validator.validate(json.dumps(malformed))
 
     malformed = valid_skill()
-    malformed["steps"][0]["tests"] = [{"framework": "vitest", "name": "works", "code": "expect(true).toBe(true);"}]
-    with pytest.raises(PipelineUnavailable, match="jest"):
+    malformed["steps"][0]["correctOptionId"] = "missing"
+    with pytest.raises(PipelineUnavailable, match="correctOptionId"):
+        validator.validate(json.dumps(malformed))
+
+    malformed = valid_skill()
+    malformed["steps"][1]["options"].append({"id": "maybe", "text": "不确定"})
+    with pytest.raises(PipelineUnavailable, match="exactly 2"):
         validator.validate(json.dumps(malformed))
 
     malformed = valid_skill()
@@ -224,6 +233,8 @@ def test_ai_compiler_sends_full_transcript_and_all_frames_without_a_real_request
     assert json.loads(raw)["bvid"] == TARGET_BVID
     assert calls[0][0].endswith("/chat/completions")
     assert calls[0][1]["json"]["model"] == "Kimi-K2.7-Code"
+    assert "single_choice" in calls[0][1]["json"]["messages"][0]["content"]
+    assert "true_false" in calls[0][1]["json"]["messages"][0]["content"]
     content = calls[0][1]["json"]["messages"][1]["content"]
     assert "完整 ASR 文本" in content[0]["text"]
     assert "12.5" in content[0]["text"]

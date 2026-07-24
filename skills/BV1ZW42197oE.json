@@ -1,20 +1,22 @@
 {
   "bvid": "BV1ZW42197oE",
-  "title": "从零搭建个人卡片",
+  "title": "30 分钟前端基础检查",
   "steps": [
     {
       "id": "html-title-paragraph",
       "title": "HTML：标题与段落",
-      "requirement": "在 .card 内添加一个非空 h1 标题和一个非空 p 介绍。",
+      "type": "single_choice",
+      "question": "要在页面中表达一个大标题和一段正文，哪组 HTML 标签最合适？",
+      "options": [
+        {"id": "a", "text": "<h1>标题</h1> 与 <p>正文</p>"},
+        {"id": "b", "text": "<img>标题</img> 与 <a>正文</a>"},
+        {"id": "c", "text": "<style>标题</style> 与 <script>正文</script>"},
+        {"id": "d", "text": "<button>标题</button> 与 <input>正文</input>"}
+      ],
+      "correctOptionId": "a",
       "videoSeconds": 522,
-      "starter": {
-        "html": "<main class=\"card\">\n  <!-- 添加标题和介绍 -->\n</main>",
-        "css": ".card { max-width: 420px; margin: 40px auto; }",
-        "js": ""
-      },
-      "tests": [{"framework": "jest", "name": "存在标题和介绍", "code": "const heading = document.querySelector('.card h1');\nconst intro = document.querySelector('.card p');\nexpect(heading).not.toBeNull();\nexpect(intro).not.toBeNull();\nexpect(heading.textContent.trim()).not.toBe('');\nexpect(intro.textContent.trim()).not.toBe('');"}],
-      "hint": "在 main 中写 `<h1>数字游牧人</h1>` 和一段 `<p>...</p>`。",
-      "failureExplanation": "h1 或 p 缺失、内容为空，都会判定未完成。",
+      "hint": "回忆老师演示标题标签和普通文本标签的位置。",
+      "failureExplanation": "h1 表示一级标题，p 表示段落；其他选项分别用于图片、链接、样式、脚本或交互控件。",
       "evidence": {
         "audio": {"startSeconds": 522.6, "endSeconds": 558.6, "quote": "HTML 前面有一个头和一个尾，中间是元素的内容；大标题用标题标签，文本一般用 p。"},
         "visual": {"startSeconds": 538, "endSeconds": 558, "description": "VS Code 中展示 h1 与 p 标签包裹标题和正文。"}
@@ -23,16 +25,16 @@
     {
       "id": "image-link",
       "title": "HTML：图片与链接",
-      "requirement": "补全图片的 src、alt 和外层链接 href，让图片可显示、可描述、可点击。",
+      "type": "true_false",
+      "question": "判断：图片被点击后跳转到哪个网页，是由 img 标签的 src 属性决定的。",
+      "options": [
+        {"id": "true", "text": "正确"},
+        {"id": "false", "text": "错误"}
+      ],
+      "correctOptionId": "false",
       "videoSeconds": 1403,
-      "starter": {
-        "html": "<main class=\"card\">\n  <h1>数字游牧人</h1>\n  <p>记录我的学习与作品。</p>\n  <a class=\"profile-link\" href=\"\">\n    <img src=\"\" alt=\"\">\n  </a>\n</main>",
-        "css": ".card { max-width: 420px; margin: 40px auto; }\nimg { width: 100%; }",
-        "js": ""
-      },
-      "tests": [{"framework": "jest", "name": "图片具有来源、替代文字和链接", "code": "const link = document.querySelector('.profile-link');\nconst image = link?.querySelector('img');\nexpect(image).not.toBeNull();\nexpect(image.getAttribute('src')).toMatch(/^(data:image|https?:\\/\\/)/);\nexpect(image.getAttribute('alt').trim()).not.toBe('');\nexpect(link.getAttribute('href')).toMatch(/^https?:\\/\\//);"}],
-      "hint": "src 可填公开图片 URL，alt 写图片说明，href 填点击后要前往的网页 URL。",
-      "failureExplanation": "缺少 src、alt 或 href 时，图片无法可靠显示、描述或跳转。",
+      "hint": "区分图片资源地址和链接跳转地址。",
+      "failureExplanation": "src 决定图片从哪里加载；点击后的跳转目标由外层 a 标签的 href 决定。",
       "evidence": {
         "audio": {"startSeconds": 1384.9, "endSeconds": 1406.1, "quote": "HTML 里写了图片的 URL，浏览器会请求这张图片；有的地方再放个链接，点了之后跳到另一个网站。"},
         "visual": {"startSeconds": 1227, "endSeconds": 1239.8, "description": "VS Code 显示 img 标签、src 图片 URL 与 alt 文本；页面随后展示 400×200 图片。"}
@@ -40,17 +42,19 @@
     },
     {
       "id": "css-card",
-      "title": "CSS：卡片布局",
-      "requirement": "为 .card 添加留白、圆角和阴影，形成居中的卡片。",
+      "title": "CSS：卡片样式",
+      "type": "single_choice",
+      "question": "哪组 CSS 属性最直接形成“有内边距、圆角和阴影”的卡片效果？",
+      "options": [
+        {"id": "a", "text": "padding、border-radius、box-shadow"},
+        {"id": "b", "text": "font-size、color、line-height"},
+        {"id": "c", "text": "width、height、overflow"},
+        {"id": "d", "text": "position、top、z-index"}
+      ],
+      "correctOptionId": "a",
       "videoSeconds": 1123,
-      "starter": {
-        "html": "<main class=\"card\">\n  <h1>数字游牧人</h1>\n  <p>记录我的学习与作品。</p>\n  <a class=\"profile-link\" href=\"https://www.bilibili.com\"><img src=\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='200'%3E%3Crect width='400' height='200' fill='%2300aeec'/%3E%3C/svg%3E\" alt=\"蓝色个人封面\"></a>\n</main>",
-        "css": "body { background: #f5f5f7; font-family: system-ui; }\n.card {\n  max-width: 420px;\n  margin: 40px auto;\n  background: white;\n  /* 添加 padding、border-radius、box-shadow */\n}\nimg { width: 100%; display: block; }",
-        "js": ""
-      },
-      "tests": [{"framework": "jest", "name": "卡片具有留白、圆角和阴影", "code": "const style = getComputedStyle(document.querySelector('.card'));\nexpect(parseFloat(style.padding)).toBeGreaterThan(0);\nexpect(parseFloat(style.borderRadius)).toBeGreaterThan(0);\nexpect(style.boxShadow).not.toBe('none');"}],
-      "hint": "例如：`padding: 24px; border-radius: 12px; box-shadow: 0 4px 16px #0002;`。",
-      "failureExplanation": "padding、border-radius 或 box-shadow 任一缺失，卡片层级就不完整。",
+      "hint": "题干中的三个视觉效果分别对应三个属性。",
+      "failureExplanation": "padding 提供内部留白，border-radius 产生圆角，box-shadow 产生阴影。",
       "evidence": {
         "audio": {"startSeconds": 1046.3, "endSeconds": 1127.9, "quote": "CSS 可以集中写样式并用 class 选中内容；box-shadow 让方块下面看起来有一层阴影。"},
         "visual": {"startSeconds": 1078, "endSeconds": 1128, "description": "VS Code 显示 .container/.section 的背景、圆角与 box-shadow，浏览器预览为白色卡片。"}
@@ -58,17 +62,17 @@
     },
     {
       "id": "follow-button",
-      "title": "JavaScript：按钮更新关注数",
-      "requirement": "点击 #follow 按钮后，把 #followers 中的数字增加 1。",
+      "title": "JavaScript：按钮点击事件",
+      "type": "true_false",
+      "question": "判断：实现“点击关注后数字加一”，可以监听按钮的 click 事件，再更新数字元素的 textContent。",
+      "options": [
+        {"id": "true", "text": "正确"},
+        {"id": "false", "text": "错误"}
+      ],
+      "correctOptionId": "true",
       "videoSeconds": 1560,
-      "starter": {
-        "html": "<main class=\"card\">\n  <h1>数字游牧人</h1>\n  <p>记录我的学习与作品。</p>\n  <a class=\"profile-link\" href=\"https://www.bilibili.com\"><img src=\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='200'%3E%3Crect width='400' height='200' fill='%2300aeec'/%3E%3C/svg%3E\" alt=\"蓝色个人封面\"></a>\n  <button id=\"follow\">关注</button>\n  <p>关注数：<span id=\"followers\">0</span></p>\n</main>",
-        "css": "body { background: #f5f5f7; font-family: system-ui; }\n.card { max-width: 420px; margin: 40px auto; padding: 24px; background: white; border-radius: 12px; box-shadow: 0 4px 16px #0002; }\nimg { width: 100%; display: block; }\nbutton { margin-top: 16px; cursor: pointer; }",
-        "js": "// 监听按钮点击并更新关注数"
-      },
-      "tests": [{"framework": "jest", "name": "点击后关注数增加一", "code": "const count = document.querySelector('#followers');\nconst before = Number(count.textContent);\ndocument.querySelector('#follow').click();\nexpect(Number(count.textContent)).toBe(before + 1);"}],
-      "hint": "获取按钮和 followers；在 click 事件中读取当前数字，再把 textContent 改为数字加 1。",
-      "failureExplanation": "按钮、元素 ID、click 监听或数字更新任一不匹配，关注数都不会变化。",
+      "hint": "回忆 addEventListener 和页面数字更新的演示。",
+      "failureExplanation": "老师使用 click 事件增加 count，并通过 textContent 把新数字写回页面。",
       "evidence": {
         "audio": {"startSeconds": 1500.9, "endSeconds": 1622.9, "quote": "页面加了 button 和显示 0 的标签；根据 ID 拿到按钮，添加 click 事件，count 加 1，再把页面上的 0 改成当前 count。"},
         "visual": {"startSeconds": 1536.9, "endSeconds": 1618.3, "description": "画面展示 button、countButton/count ID、addEventListener('click') 与 textContent 更新代码。"}

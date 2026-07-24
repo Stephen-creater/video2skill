@@ -3,10 +3,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/*.test.mjs",
-    "build:extension": "mkdir -p src/extension/vendor && cp node_modules/livecodes/livecodes.js src/extension/vendor/livecodes.js && cp node_modules/livecodes/LICENSE src/extension/LICENSES-LiveCodes.txt"
-  },
-  "devDependencies": {
-    "livecodes": "0.14.1"
+    "test": "node --test tests/*.test.mjs"
   }
 }

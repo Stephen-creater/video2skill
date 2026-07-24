@@ -2,12 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  gradeAnswer,
   progressKey,
   reduceProgress,
   isTargetPage,
-  normalizeTestResult,
   panelOptions,
-  skillConfig,
   stageEntries,
 } from "../src/extension/core.mjs";
 
@@ -20,19 +19,19 @@ test("only the target Bilibili page is supported", () => {
 
 test("progress is isolated by target BVID and survives serialized storage", () => {
   assert.equal(progressKey(BVID), `video2skill:${BVID}`);
-  const next = reduceProgress({}, { type: "FAIL", step: 2, errorType: "css" });
+  const next = reduceProgress({}, { type: "FAIL", step: 2, errorType: "answer" });
   assert.deepEqual(JSON.parse(JSON.stringify(next)), {
     currentStep: 2,
     passed: [false, false, false, false],
-    errors: { count: 1, types: { css: 1 } },
+    errors: { count: 1, types: { answer: 1 } },
   });
 });
 
-test("test results distinguish pass and fail", () => {
-  assert.equal(normalizeTestResult({ tests: [{ status: "pass" }] }).passed, true);
-  assert.equal(normalizeTestResult({ tests: [{ status: "fail" }] }).passed, false);
-  assert.equal(normalizeTestResult({ results: [{ status: "pass" }] }).passed, true);
-  assert.equal(normalizeTestResult({ results: [{ status: "error", errors: ["syntax error"] }] }).errorType, "syntax");
+test("answers are checked deterministically", () => {
+  const step = { correctOptionId: "b" };
+  assert.deepEqual(gradeAnswer(step, "b"), { passed: true, errorType: "answer" });
+  assert.deepEqual(gradeAnswer(step, "a"), { passed: false, errorType: "answer" });
+  assert.deepEqual(gradeAnswer(step), { passed: false, errorType: "answer" });
 });
 
 test("passing a step advances to the next incomplete step", () => {
@@ -43,22 +42,14 @@ test("passing a step advances to the next incomplete step", () => {
   });
 });
 
-test("LiveCodes configuration and backend stages use real API shapes", () => {
-  const config = skillConfig({ starter: { html: "<h1>x</h1>", css: "h1{}", js: "" }, tests: [{ code: "expect(true).toBe(true)" }] });
-  assert.equal(config.markup.content, "<h1>x</h1>");
-  assert.match(config.tests.content, /expect/);
+test("backend stages use real API shapes", () => {
   assert.deepEqual(stageEntries({ stages: { download: { state: "completed" } } }).map((stage) => stage.state), ["completed", "pending", "pending", "pending", "pending"]);
 });
 
-test("side panel and tests are target-scoped", () => {
+test("side panel is target-scoped", () => {
   assert.deepEqual(panelOptions(`https://www.bilibili.com/video/${BVID}/`), {
     path: "sidepanel.html",
     enabled: true,
   });
   assert.deepEqual(panelOptions("https://example.com/"), { enabled: false });
-  const config = skillConfig({
-    starter: { html: "", css: "", js: "" },
-    tests: [{ code: "test('ok', () => expect(true).toBe(true));" }],
-  });
-  assert.equal(config.tests.language, "javascript");
 });

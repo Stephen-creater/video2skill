@@ -7,16 +7,17 @@ from src.backend.pipeline import JobContext, Pipeline, PipelineUnavailable
 client = TestClient(app)
 
 
-def test_fixed_skill_has_four_executable_steps():
+def test_fixed_skill_has_four_objective_steps():
     response = client.get(f"/v1/skills/{TARGET_BVID}")
     assert response.status_code == 200
     skill = response.json()
     assert skill["bvid"] == TARGET_BVID
     assert len(skill["steps"]) == 4
+    assert {step["type"] for step in skill["steps"]} == {"single_choice", "true_false"}
     for step in skill["steps"]:
-        assert set(step["starter"]) == {"html", "css", "js"}
-        assert step["requirement"]
-        assert step["tests"]
+        assert 2 <= len(step["options"]) <= 4
+        assert step["correctOptionId"] in {option["id"] for option in step["options"]}
+        assert step["question"]
         assert step["evidence"]["audio"]
         assert step["evidence"]["visual"]
         assert 0 <= step["videoSeconds"] <= 1937
@@ -27,8 +28,7 @@ def test_unknown_video_is_rejected():
     assert response.status_code == 422
 
 
-def test_backend_exposes_local_livecodes_and_extension_cors():
-    assert any(getattr(route, "path", None) == "/livecodes" for route in app.routes)
+def test_backend_allows_extension_cors():
     response = client.get(
         f"/v1/skills/{TARGET_BVID}",
         headers={"Origin": "chrome-extension://test-extension"},
@@ -74,15 +74,13 @@ def test_regeneration_does_not_overwrite_reviewed_skill(monkeypatch, tmp_path):
     assert app_module.jobs[job_id]["status"] == "completed"
 
 
-def test_fixed_skill_has_the_requested_frontend_exercises():
+def test_fixed_skill_has_the_requested_frontend_topics():
     skill = client.get(f"/v1/skills/{TARGET_BVID}").json()
     expected = ["HTML", "图片", "CSS", "按钮"]
     for step, label in zip(skill["steps"], expected):
         assert label in step["title"]
         assert step["hint"]
         assert step["failureExplanation"]
-        assert step["tests"][0]["framework"] == "jest"
-        assert "expect(" in step["tests"][0]["code"]
 
 
 def test_default_pipeline_reports_a_missing_mlx_dependency_at_transcribe_stage(tmp_path, monkeypatch):

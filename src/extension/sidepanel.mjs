@@ -1,8 +1,7 @@
-import { createPlayground } from "./vendor/livecodes.js";
-import { BACKEND_URL, BVID, emptyProgress, normalizeTestResult, progressKey, reduceProgress, skillConfig, stageEntries } from "./core.mjs";
+import { BACKEND_URL, BVID, emptyProgress, gradeAnswer, progressKey, reduceProgress, stageEntries } from "./core.mjs";
 
 const $ = (selector) => document.querySelector(selector);
-const state = { skill: null, progress: emptyProgress(), playground: null, step: 0 };
+const state = { skill: null, progress: emptyProgress(), step: 0 };
 const storageKey = progressKey(BVID);
 
 async function save(action) {
@@ -30,35 +29,37 @@ async function selectStep(index) {
   const step = state.skill.steps[index];
   await save({ type: "SELECT", step: index });
   $("#title").textContent = step.title;
-  $("#task").textContent = step.requirement;
+  $("#question").textContent = step.question;
   $("#hint").textContent = step.hint;
   $("#failure").textContent = step.failureExplanation;
+  $("#answers").replaceChildren(...step.options.map((option) => {
+    const label = document.createElement("label");
+    const input = document.createElement("input");
+    input.type = "radio";
+    input.name = "answer";
+    input.value = option.id;
+    label.append(input, document.createTextNode(option.text));
+    return label;
+  }));
   $("#lesson").hidden = false;
+  $("#result").hidden = true;
   renderSteps();
-  const config = skillConfig(step);
-  if (!state.playground) {
-    state.playground = await createPlayground($("#playground"), {
-      appUrl: "http://127.0.0.1:8765/livecodes/",
-      config,
-      loading: "eager",
-    });
-  }
-  await state.playground.setConfig(config);
 }
 
-async function checkCode() {
-  try {
-    await state.playground.getCode();
-    const outcome = normalizeTestResult(await state.playground.runTests());
-    await save(outcome.passed
-      ? { type: "PASS", step: state.step }
-      : { type: "FAIL", step: state.step, errorType: outcome.errorType });
-    $("#status").textContent = outcome.passed ? "通过，继续下一步。" : "未通过：请根据失败解释调整后再试。";
-    renderSteps();
-  } catch (error) {
-    await save({ type: "FAIL", step: state.step, errorType: "runtime" });
-    $("#status").textContent = `检查失败：${error.message}`;
+async function checkAnswer() {
+  const selected = document.querySelector('input[name="answer"]:checked')?.value;
+  if (!selected) {
+    $("#status").textContent = "请先选择答案。";
+    return;
   }
+  const outcome = gradeAnswer(state.skill.steps[state.step], selected);
+  await save(outcome.passed
+    ? { type: "PASS", step: state.step }
+    : { type: "FAIL", step: state.step, errorType: outcome.errorType });
+  $("#status").textContent = outcome.passed ? "回答正确。" : "回答错误，可查看提示或返回视频。";
+  $("#result").hidden = false;
+  $("#result").textContent = outcome.passed ? "✓ 已通过" : state.skill.steps[state.step].failureExplanation;
+  renderSteps();
 }
 
 function renderJob(job) {
@@ -108,6 +109,6 @@ async function boot() {
 }
 
 $("#jump").onclick = () => seek(state.skill.steps[state.step].videoSeconds);
-$("#check").onclick = checkCode;
+$("#check").onclick = checkAnswer;
 $("#regenerate").onclick = regenerate;
 boot().catch((error) => { $("#status").textContent = `本地 Skill 不可用：${error.message}`; });
