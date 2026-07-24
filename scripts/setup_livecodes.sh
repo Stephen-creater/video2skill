@@ -12,4 +12,3 @@ gh api -H 'Accept: application/octet-stream' "repos/live-codes/livecodes/release
 tar -xzf "$scratch/livecodes.tar.gz" -C "$scratch"
 test -f "$scratch/build/index.html"
 mv "$scratch/build" "$target"
-
