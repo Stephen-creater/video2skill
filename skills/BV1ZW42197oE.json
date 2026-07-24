@@ -1,0 +1,74 @@
+{
+  "bvid": "BV1ZW42197oE",
+  "title": "四步网页卡片练习",
+  "steps": [
+    {
+      "id": "html-title-paragraph",
+      "title": "HTML：添加标题和段落",
+      "videoSeconds": 120,
+      "starter": {
+        "html": "<main class=\"card\"><h1>我的学习卡片</h1><p>从一个清晰的标题开始。</p></main>",
+        "css": ".card { padding: 24px; }",
+        "js": ""
+      },
+      "tests": [{"framework": "jest", "name": "has heading and paragraph", "code": "expect(document.querySelector('h1')).not.toBeNull(); expect(document.querySelector('p')).not.toBeNull();"}],
+      "hint": "用 h1 写标题，用 p 写一段简介。",
+      "failureExplanation": "标题或段落缺失时，读者无法快速理解卡片内容。",
+      "evidence": {
+        "audio": {"startSeconds": 115, "endSeconds": 125, "quote": "先把标题和说明文字放进页面。"},
+        "visual": {"startSeconds": 116, "endSeconds": 126, "description": "编辑器中出现 h1 与 p 标签。"}
+      }
+    },
+    {
+      "id": "image-link",
+      "title": "图片：加入可点击的图片链接",
+      "videoSeconds": 450,
+      "starter": {
+        "html": "<main class=\"card\"><a href=\"https://example.com\"><img src=\"https://images.unsplash.com/photo-1499750310107-5fef28a66643\" alt=\"学习桌面\"></a></main>",
+        "css": "img { max-width: 100%; }",
+        "js": ""
+      },
+      "tests": [{"framework": "jest", "name": "links an accessible image", "code": "const image = document.querySelector('a img'); expect(image.alt).toBeTruthy(); expect(image.closest('a').href).toContain('example.com');"}],
+      "hint": "把 img 放进 a 标签，并为图片提供 alt 文本。",
+      "failureExplanation": "没有链接或替代文字时，图片既不可导航也不够无障碍。",
+      "evidence": {
+        "audio": {"startSeconds": 445, "endSeconds": 456, "quote": "图片需要链接，也要写清楚替代文字。"},
+        "visual": {"startSeconds": 446, "endSeconds": 458, "description": "预览中的图片可点击，代码显示 a 包住 img。"}
+      }
+    },
+    {
+      "id": "css-card",
+      "title": "CSS：把内容做成卡片",
+      "videoSeconds": 890,
+      "starter": {
+        "html": "<main class=\"card\"><h1>CSS 卡片</h1><p>用留白、圆角和阴影建立层次。</p></main>",
+        "css": ".card { max-width: 420px; padding: 24px; border-radius: 16px; box-shadow: 0 12px 30px rgb(0 0 0 / 12%); }",
+        "js": ""
+      },
+      "tests": [{"framework": "jest", "name": "defines card styling", "code": "expect(css).toMatch(/border-radius/); expect(css).toMatch(/box-shadow/);"}],
+      "hint": "为 .card 同时添加 padding、border-radius 和 box-shadow。",
+      "failureExplanation": "缺少卡片样式时，内容会缺乏分组和视觉层级。",
+      "evidence": {
+        "audio": {"startSeconds": 884, "endSeconds": 897, "quote": "圆角、留白和阴影让它像一张卡片。"},
+        "visual": {"startSeconds": 886, "endSeconds": 899, "description": "浏览器预览显示带圆角阴影的白色卡片。"}
+      }
+    },
+    {
+      "id": "follow-button",
+      "title": "按钮：更新关注数",
+      "videoSeconds": 1320,
+      "starter": {
+        "html": "<main class=\"card\"><button id=\"follow\">关注</button><p>关注数：<span id=\"count\">0</span></p></main>",
+        "css": "button { cursor: pointer; }",
+        "js": "document.querySelector('#follow').addEventListener('click', () => { const count = document.querySelector('#count'); count.textContent = String(Number(count.textContent) + 1); });"
+      },
+      "tests": [{"framework": "jest", "name": "increments follow count", "code": "document.querySelector('#follow').click(); expect(document.querySelector('#count').textContent).toBe('1');"}],
+      "hint": "监听按钮 click 事件，再将 count 的数字加一。",
+      "failureExplanation": "按钮没有事件处理时，用户点击不会产生任何可见反馈。",
+      "evidence": {
+        "audio": {"startSeconds": 1314, "endSeconds": 1327, "quote": "点击按钮后，读取原数字再加一。"},
+        "visual": {"startSeconds": 1315, "endSeconds": 1328, "description": "点击关注按钮后，页面上的关注数从 0 变为 1。"}
+      }
+    }
+  ]
+}

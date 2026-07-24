@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 
 from src.backend.app import TARGET_BVID, app
+from src.backend.pipeline import Pipeline, PipelineUnavailable
 
 
 client = TestClient(app)
@@ -42,3 +43,24 @@ def test_compile_returns_real_job_status(monkeypatch):
         "validate",
     }
 
+
+def test_fixed_skill_has_the_requested_frontend_exercises():
+    skill = client.get(f"/v1/skills/{TARGET_BVID}").json()
+    expected = ["HTML", "图片", "CSS", "按钮"]
+    for step, label in zip(skill["steps"], expected):
+        assert label in step["title"]
+        assert step["hint"]
+        assert step["failureExplanation"]
+        assert step["tests"][0]["framework"] == "jest"
+        assert "expect(" in step["tests"][0]["code"]
+
+
+def test_default_pipeline_reports_its_unavailable_dependency():
+    pipeline = Pipeline()
+    try:
+        pipeline.run(TARGET_BVID)
+    except PipelineUnavailable as error:
+        assert error.stage == "download"
+        assert "not configured" in str(error)
+    else:
+        raise AssertionError("the default pipeline must not claim a completed skill")
