@@ -1,0 +1,5 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Video2Skill</title><link rel="stylesheet" href="sidepanel.css"></head>
+<body><header><strong>Video2Skill</strong><button id="regenerate">重新生成</button></header><p id="status" aria-live="polite">正在加载固定 Skill…</p><ol id="steps"></ol>
+<section id="lesson" hidden><h1 id="title"></h1><div class="actions"><button id="jump">跳到讲解</button><button id="check">检查代码</button></div><p><b>任务</b><span id="task"></span></p><p><b>提示</b><span id="hint"></span></p><p><b>失败时</b><span id="failure"></span></p><div id="playground"></div></section>
+<section id="job" hidden><h2>重新生成</h2><ul id="stages"></ul></section><script type="module" src="sidepanel.mjs"></script></body></html>
