@@ -14,6 +14,10 @@ export function isTargetPage(url) {
   }
 }
 
+export function panelOptions(url) {
+  return isTargetPage(url) ? { path: "sidepanel.html", enabled: true } : { enabled: false };
+}
+
 export function emptyProgress() {
   return { currentStep: 0, passed: [false, false, false, false], errors: { count: 0, types: {} } };
 }
@@ -68,7 +72,12 @@ export function skillConfig(step) {
     markup: { language: "html", content: step.starter.html },
     style: { language: "css", content: step.starter.css },
     script: { language: "javascript", content: step.starter.js },
-    tests: { language: "jest", content: step.tests.map((test) => test.code).join("\n") },
+    tests: {
+      language: "javascript",
+      content: step.tests
+        .map((test) => `test(${JSON.stringify(test.name)}, () => {\n${test.code}\n});`)
+        .join("\n"),
+    },
     activeEditor: "markup",
   };
 }

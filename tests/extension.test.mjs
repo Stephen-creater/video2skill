@@ -6,6 +6,7 @@ import {
   reduceProgress,
   isTargetPage,
   normalizeTestResult,
+  panelOptions,
   skillConfig,
   stageEntries,
 } from "../src/extension/core.mjs";
@@ -47,4 +48,17 @@ test("LiveCodes configuration and backend stages use real API shapes", () => {
   assert.equal(config.markup.content, "<h1>x</h1>");
   assert.match(config.tests.content, /expect/);
   assert.deepEqual(stageEntries({ stages: { download: { state: "completed" } } }).map((stage) => stage.state), ["completed", "pending", "pending", "pending", "pending"]);
+});
+
+test("side panel and tests are target-scoped", () => {
+  assert.deepEqual(panelOptions(`https://www.bilibili.com/video/${BVID}/`), {
+    path: "sidepanel.html",
+    enabled: true,
+  });
+  assert.deepEqual(panelOptions("https://example.com/"), { enabled: false });
+  const config = skillConfig({
+    starter: { html: "", css: "", js: "" },
+    tests: [{ code: "test('ok', () => expect(true).toBe(true));" }],
+  });
+  assert.equal(config.tests.language, "javascript");
 });
