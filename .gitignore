@@ -1,0 +1,14 @@
+.env.local
+.venv/
+inputs/*
+!inputs/.gitkeep
+work/*
+!work/.gitkeep
+vendor/*
+!vendor/.gitkeep
+.superpowers/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.egg-info/
+node_modules/
